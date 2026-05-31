@@ -1,0 +1,27 @@
+{
+  "name": "@local/r22-web",
+  "version": "0.1.0",
+  "description": "Experimental Web Bluetooth printer library for R22/Rongta R22-style label printers.",
+  "type": "module",
+  "homepage": "https://github.com/Brenden2008/r22-web#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Brenden2008/r22-web.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Brenden2008/r22-web/issues"
+  },
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "scripts": {
+    "test": "node test/protocol.test.js"
+  },
+  "keywords": [
+    "r22",
+    "r22-web",
+    "web-bluetooth",
+    "label-printer"
+  ],
+  "license": "MIT"
+}

@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>R22 Web Designer</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f4f6f8;
+        color: #17202a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+
+      button {
+        border: 0;
+        border-radius: 6px;
+        padding: 9px 11px;
+        background: #17202a;
+        color: #fff;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #e6ebf1;
+        color: #17202a;
+      }
+
+      button.ghost {
+        background: transparent;
+        color: #17202a;
+        border: 1px solid #c5ceda;
+      }
+
+      button.danger {
+        background: #ba2d3a;
+      }
+
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      input,
+      select,
+      textarea {
+        min-width: 0;
+        border: 1px solid #bac3d0;
+        border-radius: 6px;
+        padding: 8px 9px;
+        background: #fff;
+      }
+
+      label {
+        display: grid;
+        gap: 5px;
+        font-size: 12px;
+        font-weight: 650;
+      }
+
+      .app {
+        min-height: 100vh;
+        display: grid;
+        grid-template-rows: auto 1fr;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 12px 18px;
+        background: #fff;
+        border-bottom: 1px solid #d8dde6;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 20px;
+      }
+
+      .header-actions,
+      .actions {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .toolbar-toggle {
+        display: flex;
+        grid-template-columns: none;
+        align-items: center;
+        gap: 7px;
+        padding: 7px 9px;
+        border: 1px solid #c5ceda;
+        border-radius: 6px;
+        background: #fff;
+        font-size: 12px;
+        font-weight: 650;
+      }
+
+      .toolbar-toggle input {
+        margin: 0;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: 280px minmax(360px, 1fr) 320px;
+        min-height: 0;
+      }
+
+      aside,
+      .stage-panel,
+      .inspector {
+        min-height: 0;
+      }
+
+      aside,
+      .inspector {
+        background: #fff;
+        border-right: 1px solid #d8dde6;
+        padding: 14px;
+        overflow: auto;
+      }
+
+      .inspector {
+        border-right: 0;
+        border-left: 1px solid #d8dde6;
+      }
+
+      .stage-panel {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 12px;
+        padding: 16px;
+        overflow: hidden;
+      }
+
+      .panel-title {
+        margin: 0 0 10px;
+        font-size: 14px;
+      }
+
+      .tool-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .tool {
+        padding: 11px 10px;
+        text-align: left;
+        background: #f7f9fb;
+        color: #17202a;
+        border: 1px solid #d5dde8;
+      }
+
+      .section {
+        padding-bottom: 16px;
+        margin-bottom: 16px;
+        border-bottom: 1px solid #e3e8ef;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .single {
+        margin-bottom: 10px;
+      }
+
+      .stage-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .stage-wrap {
+        min-height: 0;
+        overflow: auto;
+        display: grid;
+        place-items: center;
+        padding: 28px;
+        background:
+          linear-gradient(45deg, #dfe5ec 25%, transparent 25%),
+          linear-gradient(-45deg, #dfe5ec 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #dfe5ec 75%),
+          linear-gradient(-45deg, transparent 75%, #dfe5ec 75%);
+        background-size: 22px 22px;
+        background-position: 0 0, 0 11px, 11px -11px, -11px 0;
+      }
+
+      .stage-wrap.hide-background {
+        background: #eef2f6;
+      }
+
+      .label-stage {
+        position: relative;
+        width: 600px;
+        height: 360px;
+        background: #fff;
+        border: 0;
+        box-shadow: 0 10px 34px rgb(23 32 42 / 16%);
+        overflow: hidden;
+        user-select: none;
+      }
+
+      .label-stage::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        border: 1px solid #8f9aaa;
+        pointer-events: none;
+      }
+
+      .label-stage::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        display: none;
+        pointer-events: none;
+      }
+
+      .label-stage.hide-label-border::before {
+        border-color: transparent;
+      }
+
+      .label-stage.hide-label-border {
+        box-shadow: none;
+      }
+
+      .label-stage.show-grid {
+        background-image: none;
+      }
+
+      .label-stage.show-grid::after {
+        display: block;
+        background-image:
+          linear-gradient(to right, rgb(40 92 151 / 14%) 1px, transparent 1px),
+          linear-gradient(to bottom, rgb(40 92 151 / 14%) 1px, transparent 1px);
+        background-size: var(--grid-x) var(--grid-y);
+      }
+
+      .print-preview-canvas {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        image-rendering: pixelated;
+      }
+
+      .element {
+        position: absolute;
+        border: 1px dashed transparent;
+        min-width: 18px;
+        min-height: 18px;
+        display: flex;
+        overflow: hidden;
+        color: #000;
+        background: transparent;
+        touch-action: none;
+      }
+
+      .label-stage.exact-preview .element {
+        background: transparent !important;
+      }
+
+      .label-stage.exact-preview .element:not(.selected) {
+        border-color: transparent;
+      }
+
+      .label-stage.exact-preview .element > canvas,
+      .label-stage.exact-preview .element > img,
+      .label-stage.exact-preview .element > .element-text {
+        opacity: 0;
+      }
+
+      .label-stage.exact-preview .element-rect {
+        border-color: transparent;
+      }
+
+      .label-stage.exact-preview .element-line::before {
+        opacity: 0;
+      }
+
+      .label-stage.exact-preview .element.selected {
+        border: 1px dashed #2b6cb0;
+      }
+
+      .element.selected {
+        border-color: #2b6cb0;
+        outline: 2px solid rgb(43 108 176 / 18%);
+      }
+
+      .element.dragging {
+        opacity: 0.82;
+      }
+
+      .element-text {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        line-height: 1.15;
+        width: 100%;
+      }
+
+      .element-rect {
+        border: 3px solid #000;
+      }
+
+      .element-line::before {
+        content: "";
+        width: 100%;
+        border-top: 3px solid #000;
+        align-self: center;
+      }
+
+      .element img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        pointer-events: none;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+
+      .image-shield {
+        position: absolute;
+        inset: 0;
+        background: transparent;
+        cursor: move;
+      }
+
+      .layer-controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin: 12px 0;
+      }
+
+      .layers-list {
+        display: grid;
+        gap: 6px;
+      }
+
+      .layer-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        width: 100%;
+        padding: 8px 9px;
+        border: 1px solid #d5dde8;
+        border-radius: 6px;
+        background: #f7f9fb;
+        color: #17202a;
+        text-align: left;
+      }
+
+      .layer-item.selected {
+        border-color: #2b6cb0;
+        background: #e8f1fb;
+      }
+
+      .layer-type {
+        color: #526171;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .resize-handle {
+        position: absolute;
+        right: -1px;
+        bottom: -1px;
+        width: 13px;
+        height: 13px;
+        background: #2b6cb0;
+        border: 2px solid #fff;
+        cursor: nwse-resize;
+        z-index: 2;
+      }
+
+      .log {
+        max-height: 130px;
+        overflow: auto;
+        background: #111820;
+        color: #edf4ff;
+        border-radius: 6px;
+        padding: 10px;
+        font-size: 12px;
+        margin: 0;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      @media (max-width: 1050px) {
+        .workspace {
+          grid-template-columns: 260px 1fr;
+        }
+
+        .inspector {
+          grid-column: 1 / -1;
+          border-left: 0;
+          border-top: 1px solid #d8dde6;
+        }
+      }
+
+      @media (max-width: 760px) {
+        header,
+        .workspace {
+          display: block;
+        }
+
+        aside,
+        .inspector {
+          border: 0;
+          border-bottom: 1px solid #d8dde6;
+        }
+
+        .stage-panel {
+          min-height: 540px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <h1>R22 Web Designer</h1>
+        <div class="header-actions">
+          <button id="connect" type="button">Connect</button>
+          <button id="print" type="button" disabled>Print</button>
+          <button id="importJson" class="secondary" type="button">Import JSON</button>
+          <button id="downloadJson" class="secondary" type="button">Download JSON</button>
+          <input id="jsonUpload" class="hidden" type="file" accept="application/json,.json">
+        </div>
+      </header>
+
+      <div class="workspace">
+        <aside>
+          <section class="section">
+            <h2 class="panel-title">Add</h2>
+            <div class="tool-grid">
+              <button class="tool" type="button" draggable="true" data-add="text">Text</button>
+              <button class="tool" type="button" draggable="true" data-add="barcode">Barcode</button>
+              <button class="tool" type="button" draggable="true" data-add="qr">QR</button>
+              <button class="tool" type="button" draggable="true" data-add="rect">Box</button>
+              <button class="tool" type="button" draggable="true" data-add="line">Line</button>
+              <button class="tool" type="button" id="addImage">Image</button>
+            </div>
+            <input id="imageUpload" class="hidden" type="file" accept="image/png,image/jpeg,image/svg+xml">
+          </section>
+
+          <section class="section">
+            <h2 class="panel-title">Label</h2>
+            <div class="row">
+              <label>
+                Width mm
+                <input id="widthMm" type="number" min="10" max="80" step="1" value="50">
+              </label>
+              <label>
+                Height mm
+                <input id="heightMm" type="number" min="10" max="60" step="1" value="30">
+              </label>
+            </div>
+            <div class="row">
+              <label>
+                Columns
+                <input id="columns" type="number" min="1" max="24" step="1" value="12">
+              </label>
+              <label>
+                Rows
+                <input id="rows" type="number" min="1" max="16" step="1" value="6">
+              </label>
+            </div>
+            <div class="row">
+              <label>
+                Padding mm
+                <input id="paddingMm" type="number" min="0" max="10" step="0.1" value="1.8">
+              </label>
+              <label>
+                Gap mm
+                <input id="gapMm" type="number" min="0" max="5" step="0.1" value="0.8">
+              </label>
+            </div>
+          </section>
+
+        </aside>
+
+        <main class="stage-panel">
+          <div class="stage-toolbar">
+            <div class="actions">
+              <button id="toggleGrid" class="secondary" type="button">Grid</button>
+              <label class="toolbar-toggle"><input id="hideBackground" type="checkbox"> Hide background</label>
+              <label class="toolbar-toggle"><input id="hideLabelBorder" type="checkbox"> Hide label border</label>
+              <label class="toolbar-toggle"><input id="printLabelBorder" type="checkbox" checked> Print border</label>
+              <label class="toolbar-toggle"><input id="snapToGrid" type="checkbox"> Snap to grid</label>
+              <button id="duplicate" class="secondary" type="button" disabled>Duplicate</button>
+              <button id="delete" class="danger" type="button" disabled>Delete</button>
+            </div>
+            <div class="actions">
+              <button id="fit" class="ghost" type="button">Fit</button>
+            </div>
+          </div>
+
+          <div class="stage-wrap">
+            <div id="stage" class="label-stage show-grid"></div>
+          </div>
+
+          <pre id="log" class="log"></pre>
+        </main>
+
+        <aside class="inspector">
+          <section class="section">
+            <h2 class="panel-title">Layers</h2>
+            <div id="layersList" class="layers-list"></div>
+          </section>
+
+          <section id="emptyInspector">
+            <h2 class="panel-title">Inspector</h2>
+            <p>Select an item on the label to edit it.</p>
+          </section>
+
+          <section id="itemInspector" class="hidden">
+            <h2 class="panel-title">Selected Item</h2>
+            <div class="layer-controls">
+              <button id="sendToBack" class="secondary" type="button">To back</button>
+              <button id="sendBackward" class="secondary" type="button">Back</button>
+              <button id="bringForward" class="secondary" type="button">Forward</button>
+              <button id="bringToFront" class="secondary" type="button">To front</button>
+            </div>
+            <div class="layer-controls">
+              <button id="rotateLeft" class="secondary" type="button">Rotate left</button>
+              <button id="rotateRight" class="secondary" type="button">Rotate right</button>
+            </div>
+            <label class="single">
+              Rotation
+              <select id="itemRotation">
+                <option value="0">0 degrees</option>
+                <option value="90">90 degrees</option>
+                <option value="180">180 degrees</option>
+                <option value="270">270 degrees</option>
+              </select>
+            </label>
+            <div class="row">
+              <label>
+                X
+                <input id="itemX" type="number" min="-200" max="200" step="1">
+              </label>
+              <label>
+                Y
+                <input id="itemY" type="number" min="-200" max="200" step="1">
+              </label>
+            </div>
+            <div class="row">
+              <label>
+                W
+                <input id="itemW" type="number" min="1" max="300" step="1">
+              </label>
+              <label>
+                H
+                <input id="itemH" type="number" min="1" max="300" step="1">
+              </label>
+            </div>
+
+            <label id="textControl" class="single">
+              Text / Data
+              <textarea id="itemText"></textarea>
+            </label>
+
+            <div id="textOptions">
+              <div class="row">
+                <label>
+                  Font
+                  <select id="fontFamily">
+                    <option value="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">System Sans</option>
+                    <option value="Arial, Helvetica, sans-serif">Arial</option>
+                    <option value="'Arial Narrow', Arial, sans-serif">Arial Narrow</option>
+                    <option value="Georgia, serif">Georgia</option>
+                    <option value="'Times New Roman', serif">Times</option>
+                    <option value="'Courier New', monospace">Courier</option>
+                    <option value="ui-monospace, SFMono-Regular, Menlo, monospace">Mono</option>
+                  </select>
+                </label>
+                <label>
+                  Size
+                  <input id="fontSize" type="number" min="6" max="96" step="1">
+                </label>
+              </div>
+              <div class="row">
+                <label>
+                  Align
+                  <select id="align">
+                    <option value="left">Left</option>
+                    <option value="center">Center</option>
+                    <option value="right">Right</option>
+                  </select>
+                </label>
+                <label>
+                  Vertical
+                  <select id="valign">
+                    <option value="top">Top</option>
+                    <option value="middle">Middle</option>
+                    <option value="bottom">Bottom</option>
+                  </select>
+                </label>
+              </div>
+              <div class="actions">
+                <label><input id="bold" type="checkbox"> Bold</label>
+                <label><input id="underline" type="checkbox"> Underline</label>
+                <label><input id="inverse" type="checkbox"> Inverse</label>
+              </div>
+            </div>
+
+            <div id="barcodeOptions" class="stack">
+              <label class="single">
+                Barcode type
+                <select id="barcodeType">
+                  <option value="CODE128">Code 128</option>
+                  <option value="CODE39">Code 39</option>
+                </select>
+              </label>
+              <label class="single">
+                Barcode text
+                <select id="showBarcodeText">
+                  <option value="true">Show below barcode</option>
+                  <option value="false">Hide barcode text</option>
+                </select>
+              </label>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </div>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
