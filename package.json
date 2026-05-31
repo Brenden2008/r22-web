@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Experimental Web Bluetooth printer library for R22/Rongta R22-style label printers.",
   "type": "module",
-  "homepage": "https://github.com/Brenden2008/r22-web#readme",
+  "homepage": "https://brenden2008.github.io/r22-web/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Brenden2008/r22-web.git"

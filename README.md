@@ -6,6 +6,16 @@ Web Bluetooth printing and browser-based label design for R22/Rongta-style label
 
 > Experimental hardware project: this currently targets the observed `R22_751D` BLE behavior. Firmware variants that only expose Classic Bluetooth SPP cannot be reached from Web Bluetooth.
 
+## Hosted Designer
+
+Open the hosted designer at:
+
+```text
+https://brenden2008.github.io/r22-web/
+```
+
+The hosted page is served over HTTPS, so Web Bluetooth can request printer access directly from compatible Chromium browsers.
+
 ## Features
 
 - Web Bluetooth connection to the tested R22 BLE GATT print path.
