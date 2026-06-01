@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   R22Protocol,
+  R22Printer,
   bytesToHex,
   concatBytes,
   crc16Ccitt,
@@ -137,5 +138,25 @@ const qrDots = qrContext.ops.filter((op) => op.type === "rect" && op.fill === "#
 assert.ok(qrDots.length > 0);
 assert.equal(Math.min(...qrDots.map((op) => op.x)), 0);
 assert.equal(Math.min(...qrDots.map((op) => op.y)), 0);
+
+const copyPrinter = new R22Printer({ protocol: new R22Protocol({ printerType: 0x1c }), language: "rt" });
+const copyWrites = [];
+copyPrinter.writePackets = async (writtenPackets) => {
+  copyWrites.push(writtenPackets.length);
+};
+await copyPrinter.printCanvas({
+  width: 8,
+  height: 1,
+  getContext() {
+    return {
+      getImageData() {
+        const data = new Uint8ClampedArray(8 * 1 * 4);
+        data.fill(255);
+        return { data };
+      },
+    };
+  },
+}, { copies: 3, compressed: false, maxPayloadBytes: 64, copyDelayMs: 0 });
+assert.deepEqual(copyWrites, [3, 3, 3]);
 
 console.log("ok");

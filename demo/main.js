@@ -16,6 +16,7 @@ const stageWrap = document.querySelector(".stage-wrap");
 const logEl = $("log");
 const connectButton = $("connect");
 const printButton = $("print");
+const printCopiesInput = $("printCopies");
 const importJsonButton = $("importJson");
 const downloadJsonButton = $("downloadJson");
 const jsonUpload = $("jsonUpload");
@@ -54,6 +55,7 @@ let dragState = null;
 let stageScale = 1;
 let nextId = 1;
 let snapToGrid = false;
+let isPrinting = false;
 let previewRenderId = 0;
 let previewFrame = 0;
 let previewRendering = false;
@@ -186,6 +188,19 @@ function makePrinter() {
     language: WORKING_PRINTER.language,
     writeWithResponse: WORKING_PRINTER.writeWithResponse,
   });
+}
+
+function printCopies() {
+  const copies = Math.floor(Number(printCopiesInput.value));
+  return Number.isFinite(copies) ? clamp(copies, 1, 99) : 1;
+}
+
+function setPrinting(active) {
+  isPrinting = active;
+  connectButton.disabled = active;
+  printCopiesInput.disabled = active;
+  printButton.disabled = active || !printer;
+  printButton.textContent = active ? "Printing..." : "Print";
 }
 
 function percentToDotsX(valuePercent) {
@@ -860,7 +875,7 @@ async function connectPrinter() {
     log(`PROTO 0x${command.toString(16).padStart(6, "0")}${suffix}`);
   });
   await printer.connect({ initialize: true });
-  printButton.disabled = false;
+  setPrinting(false);
   log(`Connected to ${printer.device.name || "printer"}`);
 }
 
@@ -985,6 +1000,14 @@ connectButton.addEventListener("click", async () => {
 });
 
 printButton.addEventListener("click", async () => {
+  if (isPrinting) return;
+  if (!printer) {
+    log("Connect to the printer before printing.");
+    return;
+  }
+  const copies = printCopies();
+  printCopiesInput.value = String(copies);
+  setPrinting(true);
   try {
     const canvas = await renderPrintCanvas();
     const packets = await printer.printCanvas(canvas, {
@@ -993,10 +1016,13 @@ printButton.addEventListener("click", async () => {
       threshold: WORKING_PRINTER.threshold,
       compressed: true,
       maxBagBytes: 1000,
+      copies,
     });
-    log(`Printed ${packets.length} packets`);
+    log(`Printed ${copies} ${copies === 1 ? "copy" : "copies"} (${packets.length} packets)`);
   } catch (error) {
     log(`Print failed: ${error.message}`);
+  } finally {
+    setPrinting(false);
   }
 });
 

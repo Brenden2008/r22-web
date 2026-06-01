@@ -58,6 +58,12 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function normalizeCopies(value) {
+  const copies = Number(value ?? 1);
+  if (!Number.isFinite(copies)) return 1;
+  return Math.max(1, Math.floor(copies));
+}
+
 async function getCharacteristic(service, uuid) {
   if (!uuid) return undefined;
   try {
@@ -365,21 +371,33 @@ export class R22Printer extends EventTarget {
   }
 
   async printCanvas(canvas, options = {}) {
+    const {
+      copies = 1,
+      copyDelayMs = 250,
+      ...printOptions
+    } = options;
+    const normalizedCopies = normalizeCopies(copies);
+
     if (this.language === "r22-zpl") {
-      const payload = await buildR22ZplFromCanvas(canvas, options);
+      const payload = await buildR22ZplFromCanvas(canvas, { ...printOptions, copies: normalizedCopies });
       await this.write(payload);
       return [payload];
     }
 
-    const monoBytes = renderLabelToMonoBytes(canvas, options);
+    const monoBytes = renderLabelToMonoBytes(canvas, printOptions);
     const packets = this.protocol.printBitmapPackets(
       monoBytes,
       canvas.width,
       canvas.height,
-      options,
+      printOptions,
     );
-    await this.writePackets(packets);
-    return packets;
+    const writtenPackets = [];
+    for (let copy = 0; copy < normalizedCopies; copy += 1) {
+      await this.writePackets(packets);
+      writtenPackets.push(...packets);
+      if (copyDelayMs && copy < normalizedCopies - 1) await sleep(copyDelayMs);
+    }
+    return writtenPackets;
   }
 
   begin(options = {}) {

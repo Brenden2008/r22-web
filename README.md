@@ -26,6 +26,7 @@ The hosted page is served over HTTPS, so Web Bluetooth can request printer acces
 - Scanner-friendly Code 128 and Code 39 rendering with quiet zones.
 - QR codes constrained to square object bounds.
 - Optional printed label border, snap-to-grid, hidden grid/workspace background, and one-pixel arrow-key nudging.
+- Sequential multi-copy printing from the web UI and SDK.
 
 ## Browser Support
 
@@ -50,6 +51,8 @@ http://localhost:8080/demo/
 ```
 
 Click **Connect**, choose the printer, then click **Print**.
+
+Set **Copies** before printing to send multiple labels. The designer disables the print controls while a job is active so another print cannot start until the current job finishes.
 
 The demo is hard-coded to the working `R22_751D` setup:
 

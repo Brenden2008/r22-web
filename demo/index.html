@@ -119,6 +119,15 @@
         margin: 0;
       }
 
+      .copies-control {
+        width: 92px;
+      }
+
+      .copies-control input {
+        width: 100%;
+        padding: 7px 8px;
+      }
+
       .workspace {
         display: grid;
         grid-template-columns: 280px minmax(360px, 1fr) 320px;
@@ -455,6 +464,10 @@
         <h1>R22 Web Designer</h1>
         <div class="header-actions">
           <button id="connect" type="button">Connect</button>
+          <label class="copies-control">
+            Copies
+            <input id="printCopies" type="number" min="1" max="99" step="1" value="1">
+          </label>
           <button id="print" type="button" disabled>Print</button>
           <button id="importJson" class="secondary" type="button">Import JSON</button>
           <button id="downloadJson" class="secondary" type="button">Download JSON</button>
