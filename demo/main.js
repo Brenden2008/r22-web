@@ -103,8 +103,8 @@ const state = {
     {
       id: makeId(),
       type: "barcode",
-      barcodeType: "CODE128",
-      text: "R22-751D",
+      barcodeType: "CODE128C",
+      text: "1234567890",
       x: 3,
       y: 40,
       width: 73,
@@ -310,7 +310,7 @@ function elementFromDesignElement(design, element) {
     return {
       ...base,
       text: element.data ?? "",
-      barcodeType: element.type ?? "CODE128",
+      barcodeType: element.type ?? "CODE128C",
       fontFamily: style.fontFamily ?? textDefaults().fontFamily,
       fontSize: style.fontSize ?? 12,
       showText: style.showText !== false,
@@ -381,7 +381,7 @@ function buildDesign() {
     } else if (item.type === "barcode") {
       design.styleState.fontSize = item.fontSize ?? 12;
       design.styleState.fontFamily = item.fontFamily ?? design.styleState.fontFamily;
-      design.barcode(item.barcodeType ?? "CODE128", item.text ?? "", { ...box, rotation: item.rotation ?? 0, padding: 0, quietModules: 10, showText: item.showText !== false }).clearFormatting();
+      design.barcode(item.barcodeType ?? "CODE128C", item.text ?? "", { ...box, rotation: item.rotation ?? 0, padding: 0, quietModules: 10, showText: item.showText !== false }).clearFormatting();
     } else if (item.type === "qr") {
       design.qr(item.text ?? "", { ...box, rotation: item.rotation ?? 0, padding: 0, quietModules: 0, showText: false });
     } else if (item.type === "image") {
@@ -504,7 +504,7 @@ function drawPreviewBarcode(canvas, item) {
   const ctx = canvas.getContext("2d");
   ctx.fillStyle = "#fff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  drawBarcode(ctx, item.barcodeType ?? "CODE128", item.text || "123456", {
+  drawBarcode(ctx, item.barcodeType ?? "CODE128C", item.text || "123456", {
     x: 0,
     y: 0,
     width: canvas.width,
@@ -576,7 +576,7 @@ function renderInspector() {
   $("bold").checked = Boolean(item.bold);
   $("underline").checked = Boolean(item.underline);
   $("inverse").checked = Boolean(item.inverse);
-  $("barcodeType").value = item.barcodeType ?? "CODE128";
+  $("barcodeType").value = item.barcodeType ?? "CODE128C";
   $("showBarcodeText").value = item.showText === false ? "false" : "true";
 
   const hasText = ["text", "barcode", "qr"].includes(item.type);
@@ -630,7 +630,7 @@ function addElement(type, src, position = {}) {
     height: type === "line" ? 8 : 22,
   };
   if (type === "text") Object.assign(base, textDefaults(), { text: "Text" });
-  if (type === "barcode") Object.assign(base, { barcodeType: "CODE128", text: "ABC-123", width: 73, height: 30, fontSize: 12, showText: true });
+  if (type === "barcode") Object.assign(base, { barcodeType: "CODE128C", text: "1234567890", width: 73, height: 30, fontSize: 12, showText: true });
   if (type === "qr") Object.assign(base, makeQrSquare({ ...base, text: "https://example.com", width: 24, height: 24 }));
   if (type === "image") Object.assign(base, { src, width: 30, height: 30 });
   if (type === "rect") Object.assign(base, { width: 36, height: 22, lineWidth: 3 });

@@ -153,6 +153,29 @@ assert.ok(Math.max(...barcodeBars.map((op) => op.x + op.width)) <= 300);
 assert.ok(barcodeBars.every((op) => Number.isInteger(op.x) && Number.isInteger(op.width)));
 assert.ok(barcodeBars.some((op) => op.width >= 4));
 
+const numericBarcodeContext = fakeContext();
+drawBarcode(
+  numericBarcodeContext,
+  "CODE128C",
+  "1234567890",
+  { x: 0, y: 0, width: 320, height: 80, padding: 0 },
+  { fontFamily: "sans-serif", fontSize: 12, showText: false },
+);
+const numericBarcodeBars = numericBarcodeContext.ops.filter((op) => op.type === "rect" && op.fill === "#000");
+assert.ok(numericBarcodeBars.length > 12);
+assert.ok(numericBarcodeBars.length < barcodeBars.length);
+assert.ok(numericBarcodeBars.every((op) => Number.isInteger(op.x) && Number.isInteger(op.width)));
+
+const oddNumericBarcodeContext = fakeContext();
+drawBarcode(
+  oddNumericBarcodeContext,
+  "CODE128C",
+  "12345",
+  { x: 0, y: 0, width: 320, height: 80, padding: 0 },
+  { fontFamily: "sans-serif", fontSize: 12, showText: true },
+);
+assert.ok(oddNumericBarcodeContext.ops.some((op) => op.type === "text" && op.text === "12345"));
+
 const qrContext = fakeContext();
 drawQrCode(
   qrContext,

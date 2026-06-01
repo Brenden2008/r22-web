@@ -23,7 +23,7 @@ The hosted page is served over HTTPS, so Web Bluetooth can request printer acces
 - Browser designer for text, barcodes, QR codes, images, boxes, lines, layers, and 90-degree rotation.
 - Exact print-preview canvas so the editor shows the bitmap that will be sent to the printer.
 - JSON template import/export with `{{field}}` substitution for programmatic printing.
-- Scanner-friendly Code 128 and Code 39 rendering with quiet zones.
+- Scanner-friendly Code 128 C, Code 128, and Code 39 rendering with quiet zones.
 - QR codes constrained to square object bounds.
 - Optional printed label border, snap-to-grid, hidden grid/workspace background, and one-pixel arrow-key nudging.
 - Sequential multi-copy printing from the web UI and SDK.
@@ -106,7 +106,7 @@ await printer
     .text("GARAGE SHELF A3")
   .clearFormatting()
   .cell(2, 0, 3, 7)
-    .barcode("CODE128", "R22-751D", { showText: true, fontSize: 12 })
+    .barcode("CODE128C", "1234567890", { showText: true, fontSize: 12 })
   .cell(2, 7, 3, 5)
     .qr("GARAGE SHELF A3")
   .cell(5, 0, 1, 12)
@@ -120,7 +120,7 @@ Drawing calls:
 
 - `text(value, options)`
 - `image(urlOrImageOrCanvas, options)`
-- `barcode(type, data, options)` where `type` is `CODE128` or `CODE39`
+- `barcode(type, data, options)` where `type` is `CODE128C`, `CODE128`, or `CODE39`
 - `qr(data, options)`
 - `rect(options)`
 - `line(options)`

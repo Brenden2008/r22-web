@@ -278,8 +278,30 @@ function encodeCode128B(data) {
   return [104, ...values, checksum % 103, 106];
 }
 
-function drawCode128(context, data, rect, style) {
-  const symbols = encodeCode128B(data);
+function encodeCode128C(data) {
+  const text = String(data).replace(/\D/g, "") || "0";
+  const values = [];
+
+  if (text.length % 2) {
+    values.push(text.charCodeAt(0) - 32);
+    if (text.length > 1) values.push(99);
+  }
+
+  const start = text.length % 2 ? 1 : 0;
+  for (let index = start; index < text.length; index += 2) {
+    values.push(Number(text.slice(index, index + 2)));
+  }
+  let checksum = text.length % 2 ? 104 : 105;
+  values.forEach((value, index) => {
+    checksum += value * (index + 1);
+  });
+  return {
+    symbols: [text.length % 2 ? 104 : 105, ...values, checksum % 103, 106],
+    text,
+  };
+}
+
+function drawCode128Symbols(context, data, symbols, rect, style) {
   const quiet = style.quietModules ?? 10;
   const units = [];
   if (quiet > 0) units.push({ width: quiet, black: false });
@@ -295,8 +317,21 @@ function drawCode128(context, data, rect, style) {
   drawBarcodeText(context, data, rect, style);
 }
 
+function drawCode128(context, data, rect, style) {
+  drawCode128Symbols(context, data, encodeCode128B(data), rect, style);
+}
+
+function drawCode128C(context, data, rect, style) {
+  const { symbols, text } = encodeCode128C(data);
+  drawCode128Symbols(context, text, symbols, rect, style);
+}
+
 export function drawBarcode(context, type, data, rect, style = {}) {
   const normalized = String(type || "CODE128").replace(/[-_\s]/g, "").toUpperCase();
+  if (normalized === "CODE128C" || normalized === "CODE128SETC" || normalized === "GS1128") {
+    drawCode128C(context, data, rect, style);
+    return;
+  }
   if (normalized === "CODE39") {
     drawCode39(context, data, rect, style);
     return;
