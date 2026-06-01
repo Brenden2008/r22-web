@@ -151,6 +151,7 @@ assert.ok(barcodeBars.length > 20);
 assert.ok(Math.min(...barcodeBars.map((op) => op.x)) >= 20);
 assert.ok(Math.max(...barcodeBars.map((op) => op.x + op.width)) <= 300);
 assert.ok(barcodeBars.every((op) => Number.isInteger(op.x) && Number.isInteger(op.width)));
+assert.ok(barcodeBars.every((op) => op.width >= 2));
 assert.ok(barcodeBars.some((op) => op.width >= 4));
 
 const numericBarcodeContext = fakeContext();
@@ -165,6 +166,8 @@ const numericBarcodeBars = numericBarcodeContext.ops.filter((op) => op.type === 
 assert.ok(numericBarcodeBars.length > 12);
 assert.ok(numericBarcodeBars.length < barcodeBars.length);
 assert.ok(numericBarcodeBars.every((op) => Number.isInteger(op.x) && Number.isInteger(op.width)));
+assert.ok(numericBarcodeBars.every((op) => op.width >= 2));
+assert.ok(Math.min(...numericBarcodeBars.map((op) => op.x)) >= 20);
 
 const oddNumericBarcodeContext = fakeContext();
 drawBarcode(

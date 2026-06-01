@@ -381,7 +381,7 @@ function buildDesign() {
     } else if (item.type === "barcode") {
       design.styleState.fontSize = item.fontSize ?? 12;
       design.styleState.fontFamily = item.fontFamily ?? design.styleState.fontFamily;
-      design.barcode(item.barcodeType ?? "CODE128C", item.text ?? "", { ...box, rotation: item.rotation ?? 0, padding: 0, quietModules: 10, showText: item.showText !== false }).clearFormatting();
+      design.barcode(item.barcodeType ?? "CODE128C", item.text ?? "", { ...box, rotation: item.rotation ?? 0, padding: 0, quietDots: 24, minModuleDots: 2, showText: item.showText !== false }).clearFormatting();
     } else if (item.type === "qr") {
       design.qr(item.text ?? "", { ...box, rotation: item.rotation ?? 0, padding: 0, quietModules: 0, showText: false });
     } else if (item.type === "image") {
@@ -513,7 +513,8 @@ function drawPreviewBarcode(canvas, item) {
   }, {
     fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     fontSize: item.fontSize ?? 12,
-    quietModules: 10,
+    quietDots: 24,
+    minModuleDots: 2,
     showText: item.showText !== false,
   });
 }

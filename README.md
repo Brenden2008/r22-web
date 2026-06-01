@@ -23,7 +23,7 @@ The hosted page is served over HTTPS, so Web Bluetooth can request printer acces
 - Browser designer for text, barcodes, QR codes, images, boxes, lines, layers, and 90-degree rotation.
 - Exact print-preview canvas so the editor shows the bitmap that will be sent to the printer.
 - JSON template import/export with `{{field}}` substitution for programmatic printing.
-- Scanner-friendly Code 128 C, Code 128, and Code 39 rendering with quiet zones.
+- Scanner-friendly Code 128 C, Code 128, and Code 39 rendering with 2-dot minimum modules and physical quiet zones.
 - QR codes constrained to square object bounds.
 - Optional printed label border, snap-to-grid, hidden grid/workspace background, and one-pixel arrow-key nudging.
 - Sequential multi-copy printing from the web UI and SDK.

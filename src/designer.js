@@ -228,9 +228,18 @@ function drawBarcodeUnits(context, units, rect, style) {
   const totalUnits = units.reduce((sum, unit) => sum + unit.width, 0);
   if (totalUnits <= 0) return;
   const innerWidth = Math.max(1, rect.width - rect.padding * 2);
-  const module = Math.max(1, Math.floor(innerWidth / totalUnits));
+  const minModuleDots = Math.max(1, Math.floor(style.minModuleDots ?? 2));
+  const requestedQuietDots = Math.max(0, Math.floor(
+    style.quietDots ?? ((style.quietModules ?? 10) * minModuleDots),
+  ));
+  const idealWidth = totalUnits * minModuleDots + requestedQuietDots * 2;
+  const quietDots = idealWidth <= innerWidth
+    ? requestedQuietDots
+    : Math.max(0, Math.floor((innerWidth - totalUnits * minModuleDots) / 2));
+  const module = Math.max(minModuleDots, Math.floor((innerWidth - quietDots * 2) / totalUnits));
   const actualWidth = module * totalUnits;
-  const x0 = Math.round(rect.x + rect.padding + (innerWidth - actualWidth) / 2);
+  const totalWidth = actualWidth + quietDots * 2;
+  const x0 = Math.round(rect.x + rect.padding + (innerWidth - totalWidth) / 2 + quietDots);
   const y = rect.y + rect.padding;
   const barHeight = Math.max(1, rect.height - rect.padding * 2 - barcodeTextHeight(style));
   let consumed = 0;
@@ -248,9 +257,7 @@ function drawBarcodeUnits(context, units, rect, style) {
 
 function drawCode39(context, data, rect, style) {
   const text = `*${String(data).toUpperCase().replace(/[^0-9A-Z $./+%-]/g, "-")}*`;
-  const quiet = style.quietModules ?? 10;
   const units = [];
-  if (quiet > 0) units.push({ width: quiet, black: false });
   for (const char of text) {
     const pattern = CODE39[char] ?? CODE39["-"];
     [...pattern].forEach((item, index) => {
@@ -258,7 +265,6 @@ function drawCode39(context, data, rect, style) {
     });
     units.push({ width: 1, black: false });
   }
-  if (quiet > 0) units.push({ width: quiet, black: false });
 
   drawBarcodeUnits(context, units, rect, style);
   drawBarcodeText(context, data, rect, style);
@@ -302,16 +308,13 @@ function encodeCode128C(data) {
 }
 
 function drawCode128Symbols(context, data, symbols, rect, style) {
-  const quiet = style.quietModules ?? 10;
   const units = [];
-  if (quiet > 0) units.push({ width: quiet, black: false });
   for (const symbol of symbols) {
     const pattern = CODE128_PATTERNS[symbol];
     [...pattern].forEach((width, index) => {
       units.push({ width: Number(width), black: index % 2 === 0 });
     });
   }
-  if (quiet > 0) units.push({ width: quiet, black: false });
 
   drawBarcodeUnits(context, units, rect, style);
   drawBarcodeText(context, data, rect, style);
@@ -517,7 +520,7 @@ export class R22GridDesign {
   }
 
   barcode(type, data, options = {}) {
-    this.elements.push({ kind: "barcode", type, data, box: this.elementBox(options), style: this.cloneStyle({ ...options, padding: options.padding ?? 0, quietModules: options.quietModules ?? 10 }) });
+    this.elements.push({ kind: "barcode", type, data, box: this.elementBox(options), style: this.cloneStyle({ ...options, padding: options.padding ?? 0, quietModules: options.quietModules ?? 10, minModuleDots: options.minModuleDots ?? 2 }) });
     return this;
   }
 
