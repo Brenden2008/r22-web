@@ -233,12 +233,15 @@ export class R22Printer extends EventTarget {
 
   isPrintCompletePacket(packet) {
     const payload = packet?.payload ?? [];
-    return packet?.command === 0x101201 &&
-      payload.length >= 11 &&
+    return packet?.command === 0x100107 &&
+      payload.length >= 28 &&
       payload[0] === 0x01 &&
-      payload[1] === 0x04 &&
-      payload[7] === 0x02 &&
-      payload[8] === 0x01;
+      payload[1] === 0x01 &&
+      payload[4] === 0x02 &&
+      payload[5] === 0x0e &&
+      payload[6] === 0x00 &&
+      payload[21] === 0x03 &&
+      payload[22] === 0x04;
   }
 
   async waitForPrintComplete({ timeoutMs = 30000, settleMs = 400 } = {}) {
