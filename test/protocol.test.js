@@ -49,6 +49,18 @@ assert.equal(parsed.packets.length, 2);
 assert.equal(parsed.packets[0].command, 0x010101);
 assert.equal(parsed.remainder.length, 0);
 
+const completionBytes = Uint8Array.from([
+  0xa3, 0x1e, 0x1c, 0x00, 0x10, 0x00, 0x10, 0x01, 0x12, 0x0b, 0x00,
+  0x01, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x01, 0x00, 0x00,
+  0x4b, 0xdf, 0xd8, 0x8d,
+]);
+const completionPrinter = new R22Printer({ protocol: new R22Protocol({ printerType: 0x1c }), language: "rt" });
+const completionWait = completionPrinter.waitForPrintComplete({ timeoutMs: 100, settleMs: 0 });
+completionPrinter.handleIncomingData(completionBytes);
+const completionPacket = await completionWait;
+assert.equal(completionPacket.command, 0x101201);
+assert.ok(completionPrinter.isPrintCompletePacket(completionPacket));
+
 const selfTest = protocol.selfTestPacket();
 assert.deepEqual([...selfTest.slice(6, 9)], [0x01, 0x05, 0x09]);
 assert.equal(bytesToHex(protocol.batteryStatusPacket()), "a3 1e 1c 00 05 00 01 01 0e 00 00 dd ad 51 f8");
@@ -145,6 +157,9 @@ const copyEvents = [];
 copyPrinter.writePackets = async (writtenPackets) => {
   copyWrites.push(writtenPackets.length);
 };
+copyPrinter.waitForPrintComplete = async () => {
+  copyEvents.push("complete-status");
+};
 await copyPrinter.printCanvas({
   width: 8,
   height: 1,
@@ -162,11 +177,15 @@ await copyPrinter.printCanvas({
   compressed: false,
   maxPayloadBytes: 64,
   copyDelayMs: 0,
-  afterLastCopyDelayMs: 0,
   onCopyStart: ({ copy }) => copyEvents.push(`start-${copy}`),
   onCopyWritten: ({ copy }) => copyEvents.push(`written-${copy}`),
+  onCopyComplete: ({ copy }) => copyEvents.push(`complete-${copy}`),
 });
 assert.deepEqual(copyWrites, [3, 3, 3]);
-assert.deepEqual(copyEvents, ["start-1", "written-1", "start-2", "written-2", "start-3", "written-3"]);
+assert.deepEqual(copyEvents, [
+  "start-1", "written-1", "complete-status", "complete-1",
+  "start-2", "written-2", "complete-status", "complete-2",
+  "start-3", "written-3", "complete-status", "complete-3",
+]);
 
 console.log("ok");

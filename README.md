@@ -52,7 +52,7 @@ http://localhost:8080/demo/
 
 Click **Connect**, choose the printer, then click **Print**.
 
-Set **Copies** before printing to send multiple labels. The designer disables the print controls while a job is active and waits between copies so the printer can finish physically feeding one label before the next bitmap is sent.
+Set **Copies** before printing to send multiple labels. The designer disables the print controls while a job is active and waits for the printer's print-complete status before sending the next bitmap. If a firmware variant does not emit that status, it falls back to a timed delay.
 
 The demo is hard-coded to the working `R22_751D` setup:
 

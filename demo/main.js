@@ -1022,7 +1022,9 @@ printButton.addEventListener("click", async () => {
       maxBagBytes: 1000,
       copies,
       copyDelayMs: 4500,
-      afterLastCopyDelayMs: 1200,
+      waitForPrintComplete: true,
+      printCompleteTimeoutMs: 30000,
+      printCompleteSettleMs: 400,
       onCopyStart: ({ copy, copies: totalCopies }) => {
         setPrintProgress(`Printing ${copy}/${totalCopies}`);
         log(`Sending copy ${copy}/${totalCopies}`);
@@ -1035,6 +1037,12 @@ printButton.addEventListener("click", async () => {
           setPrintProgress("Finishing...");
           log(`Copy ${copy}/${totalCopies} sent; waiting for printer to finish`);
         }
+      },
+      onCopyComplete: ({ copy, copies: totalCopies }) => {
+        log(`Printer reported copy ${copy}/${totalCopies} complete`);
+      },
+      onCopyWaitTimeout: ({ copy, copies: totalCopies }) => {
+        log(`No print-complete status for copy ${copy}/${totalCopies}; using fallback delay`);
       },
     });
     log(`Printed ${copies} ${copies === 1 ? "copy" : "copies"} (${packets.length} packets)`);

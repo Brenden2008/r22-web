@@ -210,10 +210,14 @@ export class R22Printer extends EventTarget {
     const existing = this.protocolPackets.find(predicate);
     if (existing) return Promise.resolve(existing);
 
+    return this.waitForNewProtocolPacket(predicate, timeoutMs);
+  }
+
+  waitForNewProtocolPacket(predicate, timeoutMs = 1800, timeoutMessage = "Timed out waiting for R22 protocol response") {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         this.removeEventListener("protocol", onProtocol);
-        reject(new Error("Timed out waiting for R22 protocol response"));
+        reject(new Error(timeoutMessage));
       }, timeoutMs);
 
       const onProtocol = (event) => {
@@ -225,6 +229,26 @@ export class R22Printer extends EventTarget {
 
       this.addEventListener("protocol", onProtocol);
     });
+  }
+
+  isPrintCompletePacket(packet) {
+    const payload = packet?.payload ?? [];
+    return packet?.command === 0x101201 &&
+      payload.length >= 11 &&
+      payload[0] === 0x01 &&
+      payload[1] === 0x04 &&
+      payload[7] === 0x02 &&
+      payload[8] === 0x01;
+  }
+
+  async waitForPrintComplete({ timeoutMs = 30000, settleMs = 400 } = {}) {
+    const packet = await this.waitForNewProtocolPacket(
+      (item) => this.isPrintCompletePacket(item),
+      timeoutMs,
+      "Timed out waiting for R22 print-complete status",
+    );
+    if (settleMs) await sleep(settleMs);
+    return packet;
   }
 
   async waitForAuthCode() {
@@ -374,9 +398,13 @@ export class R22Printer extends EventTarget {
     const {
       copies = 1,
       copyDelayMs = 4500,
-      afterLastCopyDelayMs = 1200,
+      waitForPrintComplete = true,
+      printCompleteTimeoutMs = 30000,
+      printCompleteSettleMs = 400,
       onCopyStart,
       onCopyWritten,
+      onCopyComplete,
+      onCopyWaitTimeout,
       ...printOptions
     } = options;
     const normalizedCopies = normalizeCopies(copies);
@@ -386,7 +414,6 @@ export class R22Printer extends EventTarget {
       if (onCopyStart) onCopyStart({ copy: 1, copies: normalizedCopies });
       await this.write(payload);
       if (onCopyWritten) onCopyWritten({ copy: normalizedCopies, copies: normalizedCopies });
-      if (afterLastCopyDelayMs) await sleep(afterLastCopyDelayMs);
       return [payload];
     }
 
@@ -403,9 +430,20 @@ export class R22Printer extends EventTarget {
       await this.writePackets(packets);
       if (onCopyWritten) onCopyWritten({ copy: copy + 1, copies: normalizedCopies });
       writtenPackets.push(...packets);
-      if (copyDelayMs && copy < normalizedCopies - 1) await sleep(copyDelayMs);
+      if (waitForPrintComplete) {
+        try {
+          await this.waitForPrintComplete({
+            timeoutMs: printCompleteTimeoutMs,
+            settleMs: printCompleteSettleMs,
+          });
+          if (onCopyComplete) onCopyComplete({ copy: copy + 1, copies: normalizedCopies });
+          continue;
+        } catch (error) {
+          if (onCopyWaitTimeout) onCopyWaitTimeout({ copy: copy + 1, copies: normalizedCopies, error });
+        }
+      }
+      if (copyDelayMs) await sleep(copyDelayMs);
     }
-    if (afterLastCopyDelayMs) await sleep(afterLastCopyDelayMs);
     return writtenPackets;
   }
 
