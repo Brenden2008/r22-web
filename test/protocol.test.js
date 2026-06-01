@@ -141,6 +141,7 @@ assert.equal(Math.min(...qrDots.map((op) => op.y)), 0);
 
 const copyPrinter = new R22Printer({ protocol: new R22Protocol({ printerType: 0x1c }), language: "rt" });
 const copyWrites = [];
+const copyEvents = [];
 copyPrinter.writePackets = async (writtenPackets) => {
   copyWrites.push(writtenPackets.length);
 };
@@ -156,7 +157,16 @@ await copyPrinter.printCanvas({
       },
     };
   },
-}, { copies: 3, compressed: false, maxPayloadBytes: 64, copyDelayMs: 0 });
+}, {
+  copies: 3,
+  compressed: false,
+  maxPayloadBytes: 64,
+  copyDelayMs: 0,
+  afterLastCopyDelayMs: 0,
+  onCopyStart: ({ copy }) => copyEvents.push(`start-${copy}`),
+  onCopyWritten: ({ copy }) => copyEvents.push(`written-${copy}`),
+});
 assert.deepEqual(copyWrites, [3, 3, 3]);
+assert.deepEqual(copyEvents, ["start-1", "written-1", "start-2", "written-2", "start-3", "written-3"]);
 
 console.log("ok");

@@ -373,14 +373,20 @@ export class R22Printer extends EventTarget {
   async printCanvas(canvas, options = {}) {
     const {
       copies = 1,
-      copyDelayMs = 250,
+      copyDelayMs = 4500,
+      afterLastCopyDelayMs = 1200,
+      onCopyStart,
+      onCopyWritten,
       ...printOptions
     } = options;
     const normalizedCopies = normalizeCopies(copies);
 
     if (this.language === "r22-zpl") {
       const payload = await buildR22ZplFromCanvas(canvas, { ...printOptions, copies: normalizedCopies });
+      if (onCopyStart) onCopyStart({ copy: 1, copies: normalizedCopies });
       await this.write(payload);
+      if (onCopyWritten) onCopyWritten({ copy: normalizedCopies, copies: normalizedCopies });
+      if (afterLastCopyDelayMs) await sleep(afterLastCopyDelayMs);
       return [payload];
     }
 
@@ -393,10 +399,13 @@ export class R22Printer extends EventTarget {
     );
     const writtenPackets = [];
     for (let copy = 0; copy < normalizedCopies; copy += 1) {
+      if (onCopyStart) onCopyStart({ copy: copy + 1, copies: normalizedCopies });
       await this.writePackets(packets);
+      if (onCopyWritten) onCopyWritten({ copy: copy + 1, copies: normalizedCopies });
       writtenPackets.push(...packets);
       if (copyDelayMs && copy < normalizedCopies - 1) await sleep(copyDelayMs);
     }
+    if (afterLastCopyDelayMs) await sleep(afterLastCopyDelayMs);
     return writtenPackets;
   }
 

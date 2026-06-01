@@ -195,12 +195,16 @@ function printCopies() {
   return Number.isFinite(copies) ? clamp(copies, 1, 99) : 1;
 }
 
-function setPrinting(active) {
+function setPrinting(active, label = "Printing...") {
   isPrinting = active;
   connectButton.disabled = active;
   printCopiesInput.disabled = active;
   printButton.disabled = active || !printer;
-  printButton.textContent = active ? "Printing..." : "Print";
+  printButton.textContent = active ? label : "Print";
+}
+
+function setPrintProgress(label) {
+  if (isPrinting) printButton.textContent = label;
 }
 
 function percentToDotsX(valuePercent) {
@@ -1017,6 +1021,21 @@ printButton.addEventListener("click", async () => {
       compressed: true,
       maxBagBytes: 1000,
       copies,
+      copyDelayMs: 4500,
+      afterLastCopyDelayMs: 1200,
+      onCopyStart: ({ copy, copies: totalCopies }) => {
+        setPrintProgress(`Printing ${copy}/${totalCopies}`);
+        log(`Sending copy ${copy}/${totalCopies}`);
+      },
+      onCopyWritten: ({ copy, copies: totalCopies }) => {
+        if (copy < totalCopies) {
+          setPrintProgress(`Waiting ${copy}/${totalCopies}`);
+          log(`Copy ${copy}/${totalCopies} sent; waiting for printer to finish before next copy`);
+        } else {
+          setPrintProgress("Finishing...");
+          log(`Copy ${copy}/${totalCopies} sent; waiting for printer to finish`);
+        }
+      },
     });
     log(`Printed ${copies} ${copies === 1 ? "copy" : "copies"} (${packets.length} packets)`);
   } catch (error) {
