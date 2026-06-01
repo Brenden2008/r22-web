@@ -214,6 +214,13 @@ export class R22Printer extends EventTarget {
   }
 
   waitForNewProtocolPacket(predicate, timeoutMs = 1800, timeoutMessage = "Timed out waiting for R22 protocol response") {
+    return this.waitForProtocolPacketSince(this.protocolPackets.length, predicate, timeoutMs, timeoutMessage);
+  }
+
+  waitForProtocolPacketSince(startIndex, predicate, timeoutMs = 1800, timeoutMessage = "Timed out waiting for R22 protocol response") {
+    const existing = this.protocolPackets.slice(startIndex).find(predicate);
+    if (existing) return Promise.resolve(existing);
+
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         this.removeEventListener("protocol", onProtocol);
@@ -231,6 +238,10 @@ export class R22Printer extends EventTarget {
     });
   }
 
+  isImageEndAckPacket(packet) {
+    return packet?.command === 0x210c05;
+  }
+
   isPrintCompletePacket(packet) {
     const payload = packet?.payload ?? [];
     return packet?.command === 0x100107 &&
@@ -244,14 +255,36 @@ export class R22Printer extends EventTarget {
       payload[22] === 0x04;
   }
 
-  async waitForPrintComplete({ timeoutMs = 30000, settleMs = 400 } = {}) {
-    const packet = await this.waitForNewProtocolPacket(
-      (item) => this.isPrintCompletePacket(item),
+  async waitForPrintComplete({
+    timeoutMs = 30000,
+    settleMs = 400,
+    imageEndAckGraceMs = 3000,
+    since = this.protocolPackets.length,
+  } = {}) {
+    const packet = await this.waitForProtocolPacketSince(
+      since,
+      (item) => this.isPrintCompletePacket(item) || this.isImageEndAckPacket(item),
       timeoutMs,
       "Timed out waiting for R22 print-complete status",
     );
-    if (settleMs) await sleep(settleMs);
-    return packet;
+    if (this.isPrintCompletePacket(packet)) {
+      if (settleMs) await sleep(settleMs);
+      return { packet, reason: "print-complete" };
+    }
+
+    const ackIndex = this.protocolPackets.indexOf(packet);
+    try {
+      const completePacket = await this.waitForProtocolPacketSince(
+        ackIndex + 1,
+        (item) => this.isPrintCompletePacket(item),
+        imageEndAckGraceMs,
+        "Timed out waiting for R22 print-complete status after image-end ack",
+      );
+      if (settleMs) await sleep(settleMs);
+      return { packet: completePacket, ackPacket: packet, reason: "print-complete-after-image-end-ack" };
+    } catch {
+      return { packet, reason: "image-end-ack-timeout" };
+    }
   }
 
   async waitForAuthCode() {
@@ -430,16 +463,18 @@ export class R22Printer extends EventTarget {
     const writtenPackets = [];
     for (let copy = 0; copy < normalizedCopies; copy += 1) {
       if (onCopyStart) onCopyStart({ copy: copy + 1, copies: normalizedCopies });
+      const waitCursor = this.protocolPackets.length;
       await this.writePackets(packets);
       if (onCopyWritten) onCopyWritten({ copy: copy + 1, copies: normalizedCopies });
       writtenPackets.push(...packets);
       if (waitForPrintComplete) {
         try {
-          await this.waitForPrintComplete({
+          const status = await this.waitForPrintComplete({
             timeoutMs: printCompleteTimeoutMs,
             settleMs: printCompleteSettleMs,
+            since: waitCursor,
           });
-          if (onCopyComplete) onCopyComplete({ copy: copy + 1, copies: normalizedCopies });
+          if (onCopyComplete) onCopyComplete({ copy: copy + 1, copies: normalizedCopies, status });
           continue;
         } catch (error) {
           if (onCopyWaitTimeout) onCopyWaitTimeout({ copy: copy + 1, copies: normalizedCopies, error });

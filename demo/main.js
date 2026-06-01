@@ -1038,8 +1038,12 @@ printButton.addEventListener("click", async () => {
           log(`Copy ${copy}/${totalCopies} sent; waiting for printer to finish`);
         }
       },
-      onCopyComplete: ({ copy, copies: totalCopies }) => {
-        log(`Printer reported copy ${copy}/${totalCopies} complete`);
+      onCopyComplete: ({ copy, copies: totalCopies, status }) => {
+        if (status?.reason === "image-end-ack-timeout") {
+          log(`Printer acknowledged image end for copy ${copy}/${totalCopies}; no completion packet after 3s, proceeding`);
+        } else {
+          log(`Printer reported copy ${copy}/${totalCopies} complete`);
+        }
       },
       onCopyWaitTimeout: ({ copy, copies: totalCopies }) => {
         log(`No print-complete status for copy ${copy}/${totalCopies}; using fallback delay`);

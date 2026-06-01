@@ -58,9 +58,22 @@ const completionBytes = Uint8Array.from([
 const completionPrinter = new R22Printer({ protocol: new R22Protocol({ printerType: 0x1c }), language: "rt" });
 const completionWait = completionPrinter.waitForPrintComplete({ timeoutMs: 100, settleMs: 0 });
 completionPrinter.handleIncomingData(completionBytes);
-const completionPacket = await completionWait;
+const { packet: completionPacket, reason: completionReason } = await completionWait;
 assert.equal(completionPacket.command, 0x100107);
+assert.equal(completionReason, "print-complete");
 assert.ok(completionPrinter.isPrintCompletePacket(completionPacket));
+
+const imageEndAckBytes = Uint8Array.from([
+  0xa3, 0x1e, 0x1c, 0x00, 0x05, 0x00, 0x21, 0x05, 0x0c, 0x00, 0x00,
+  0xb3, 0x52, 0xae, 0xbd,
+]);
+const ackPrinter = new R22Printer({ protocol: new R22Protocol({ printerType: 0x1c }), language: "rt" });
+const ackWait = ackPrinter.waitForPrintComplete({ timeoutMs: 100, imageEndAckGraceMs: 1, settleMs: 0 });
+ackPrinter.handleIncomingData(imageEndAckBytes);
+const { packet: ackPacket, reason: ackReason } = await ackWait;
+assert.equal(ackPacket.command, 0x210c05);
+assert.equal(ackReason, "image-end-ack-timeout");
+assert.ok(ackPrinter.isImageEndAckPacket(ackPacket));
 
 const selfTest = protocol.selfTestPacket();
 assert.deepEqual([...selfTest.slice(6, 9)], [0x01, 0x05, 0x09]);
@@ -160,6 +173,7 @@ copyPrinter.writePackets = async (writtenPackets) => {
 };
 copyPrinter.waitForPrintComplete = async () => {
   copyEvents.push("complete-status");
+  return { reason: "print-complete" };
 };
 await copyPrinter.printCanvas({
   width: 8,
